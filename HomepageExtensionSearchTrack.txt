@@ -1,0 +1,24 @@
+THIS IS SOLELY FOR SCRAPING FROM THE MAIN HOMEPAGE OF BRIGHTSPACE. 
+
+Search Track:
+html -> body class d2l-body -> div class d2l-body-main-wrapper -> div class d2l-page-main -> div class d2l-page-main-padding -> div class d2l-homepage -> div class homepage-container -> div class homepage-row -> div -> div class homepage-col-4 -> div role region aria-labelledby d2l_1_26_216 -> d2l-expand-collapse-content expanded class d2l-widget-content -> div class d2l-widget-content-padding -> d2l-w2d-work-to-do -> #shadow-root -> d2l-w2d-collections (GRAB USER-URL TO GET THE LAST 5 DIGITS FOR USERID) -> div class -> d2l-w2d-list -> #shadow-root -> d2l-list -> d2l-w2d-list-item-[quiz, assignment, discussion, content] -> #shadow-root -> d2l-list-item-generic-layout (for each)
+
+At d2l-list-item-generic-layout, it will be slightly different but mostly the same.
+
+[...] -> div slot content-action -> a aria-labelledby d2l-uid-[###] (may change) -> div slot content class d2l-list-item-content -> slot (NOT NAME="ILLUSTRATION") -> d2l-list-item-content
+
+From d2l-list-item-content, we will find the related information we need. (Assignment Name, Course, Due Date) 
+
+Assignment Name:
+[d2l-list-item-content] -> d2l-activity-name-[assignment, quiz, discussion, content] class d2l-w2d-list-item-name _label="[ASSIGNMENT NAME]" -> #shadow-root -> d2l-hc-name -> #shadow-root -> span class d2l-skeletize -> "[ASSIGNMENT NAME]"
+Assignment name will be within that span in plaintext.
+
+Due Date:
+[d2l-list-item-content] -> d2l-w2d-attribute-list -> div -> span[1] -> "Due [Mth #]"
+Due date will also be in plaintext, must be parsed for just the Mth and #, with logic included to address the year, either by calculating the current year or if the assignment is for the year after (unlikely but possible) to include that logic as well.
+
+Course Name:
+[d2l-list-item-content] -> d2l-w2d-attribute-list -> div -> span[2] -> "[Course Name]"
+Course name is also in plaintext within the span, so logic could be included to specifically give that course a color or attribution within the description or something similar.
+
+THIS IS SOLELY FOR SCRAPING FROM THE MAIN HOMEPAGE OF BRIGHTSPACE. MAKE CASES FOR EACH COURSE HOMEPAGE AND EXPANDED TO-DO LIST.

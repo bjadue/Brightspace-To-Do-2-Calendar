@@ -1,0 +1,41 @@
+THIS IS FOR THE FULL WORKTODO PAGE (.../d2l/le/worktodo/view)
+[TYPE]=(quiz, assignment, discussion, content)
+
+Search Track (Date):
+html -> body class d2l-body -> d2l-w2d-work-to-do -> #shadow-root -> d2l-w2d-collections -> #shadow-root -> div -> div[#] class d2l-w2d-flex -> h3 class d2l-w2d-heading-3 -> [DATE]
+
+# for every date header, exclude 1 due to it being the "Upcoming Work" header.
+Date is in plaintext. Parseable, year calculateable.
+
+Search Track (Assignment name, Course name, Description, Start Date [if applicable]):
+html -> body class d2l-body -> d2l-w2d-work-to-do -> #shadow-root -> d2l-w2d-collections -> #shadow-root -> div -> d2l-w2d-list[#] (recursive, for every assignment in date) -> #shadow-root -> d2l-list -> d2l-w2d-list-item-[TYPE] -> #shadow-root -> d2l-list-item-generic-layout -> [CLICKABLE OR NONCLICKABLE]
+
+IF CLICKABLE:
+[...] -> div slot content-action (usually 6th) -> a (grab href maybe) -> [continue below]
+
+IF NON-CLICKABLE, or continuing from above:
+[...] -> div slot content (usually 6th) class d2l-list-item-content -> slot[2] -> d2l-list-item-content -> [...]
+
+Every # is an individual assignment WITHIN the date.
+By this logic in a pseudocode env:
+i = 2
+date = [...]/div class="d2l-w2d-flex"[i]/h3
+name(and all others) = [...]/d2l-w2d-list[i-1]/[...]
+
+Assignment Name:
+[...] -> d2l-activity-name-[TYPE] -> #shadow-root -> d2l-hc-name -> #shadow-root -> span class d2l-skeletize
+
+Course Name:
+Name:
+[...] -> d2l-w2d-attribute-list -> div -> span
+Easy find, shown in plaintext.
+
+Description (IF EXISTS):
+[...] -> d2l-activity-description-[TYPE] -> #shadow-root -> span
+All in plaintext, easy find.
+
+Start Date (IF EXISTS):
+[...] -> d2l-w2d-attribute-list -> div -> d2l-status-indicator
+Parseable from the text attribute, or from the contained plaintext
+
+

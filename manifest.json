@@ -7,9 +7,6 @@
     "default_popup": "main.html",
     "default_icon": "hello_extensions.png"
   },
-  "content_scripts": [ {
-
-  }],
   "permissions": [
     "storage",
     "background",

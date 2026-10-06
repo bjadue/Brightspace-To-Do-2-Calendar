@@ -9,10 +9,14 @@
   },
   "permissions": [
     "storage",
-    "background",
-    "scripting",
     "activeTab",
-    "tabs",
-    "alarms"
+    "scripting",
+    "tabs"
+  ],
+  "content_scripts": [
+    {
+      "js": ["./gate.js"],
+      "run_at": "document_start"
+    }
   ]
 }

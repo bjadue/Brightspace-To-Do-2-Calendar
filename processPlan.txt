@@ -1,0 +1,5 @@
+Extension should start automatically, checking if the site is D2L Brightspace.
+This will happen on gate.js, then if it is a match, forward to main.js.\
+If not, stop.
+
+Main.js will scrape the page for the To-Do list and populate the extension's list on the HTML page.

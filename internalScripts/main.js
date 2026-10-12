@@ -6,37 +6,35 @@ function scrapeW2D_homepage() {
 
     try {
         const w2dWidget = document.querySelector('d2l-w2d-work-to-do');
-        if (!w2dWidget || !w2dWidget.shadowRoot) return [];
+        
+        const w2dCollections = w2dWidget?.shadowRoot.querySelector('d2l-w2d-collections');
 
-        const w2dCollections = w2dWidget.shadowRoot.querySelector('d2l-w2d-collections');
-        if (!w2dCollections || !w2dCollections.shadowRoot) return [];
+        const w2dListContainer = w2dCollections?.shadowRoot.querySelector('d2l-w2d-list');
 
-        const w2dListContainer = w2dCollections.shadowRoot.querySelector('d2l-w2d-list');
-        if (!w2dListContainer || !w2dListContainer.shadowRoot) return [];
-
-        const d2lList = w2dListContainer.shadowRoot.querySelector('d2l-list');
-        if (!d2lList) return [];
-
+        const d2lList = w2dListContainer?.shadowRoot.querySelector('d2l-list');
+        if (!d2lList || !d2lList.shadowRoot) throw new Error("List not found. Exiting.");
         // running through all item types
-        const items = d2lList.querySelectorAll('d2l-w2d-list-item-quiz, d2l-w2d-list-item-assignment, d2l-w2d-list-item-discussion, d2l-w2d-list-item-content');
-
+        const items = d2lList?.querySelectorAll('d2l-w2d-list-item-quiz, d2l-w2d-list-item-assignment, d2l-w2d-list-item-discussion, d2l-w2d-list-item-content');
         items.forEach((item, index) => {
-            if (!item.shadowRoot) return;
+            if (!item.shadowRoot) throw new Error("it would appear we dont have an assignment after all... exiting");;
 
-            const itemGenericLayout = item.shadowRoot.querySelector('d2l-list-item-generic-layout');
-            if (!itemGenericLayout || !itemGenericLayout.shadowRoot) return;
+            const itemGenericLayout = item?.shadowRoot.querySelector('d2l-list-item-generic-layout');
+            if (!itemGenericLayout || !itemGenericLayout.shadowRoot) throw new Error("FUCK YUUUUUUUUUUuu");
 
-            const itemContentSlot = itemGenericLayout.shadowRoot.querySelector('div[slot="content"]');
-            if (!itemContentSlot) return;
+            const itemContentSlot = itemGenericLayout?.querySelector('div[slot="content"], div[slot="content-action"]');
+            if (!itemContentSlot) throw new Error("fuck the itemContentSlot");
+
+            const itemHref = itemContentSlot?.querySelector('a');
+            if (!itemHref){
+                console.log("Unclickable assignment. Disregard");
+            } else {
+                assignmentLink = itemHref?.getAttribute('href');
+            }
             // we grabbing the name
-            const itemNameElement = itemContentSlot.querySelector('[class*="d2l-w2d-list-item-name"]');
+            const itemNameElement = itemContentSlot?.querySelector('[class*="d2l-w2d-list-item-name"]');
             let assignmentName = "Unknown";
             if (itemNameElement && itemNameElement.shadowRoot) {
-                const itemHcName = itemNameElement.shadowRoot.querySelector('d2l-wc-name');
-                if (itemHcName && itemHcName.shadowRoot) {
-                    const span = itemHcName.shadowRoot.querySelector('span.d2l-skeletize');
-                    if (span) assignmentName = span.textContent.trim();
-                }
+                assignmentName = itemNameElement?.getAttribute("_label")
             }
 
             //we grabbing the due date and course name
@@ -53,11 +51,20 @@ function scrapeW2D_homepage() {
 
             //get the right due date
             const parsedDate = parseDueDate(rawDueDate)
+
+            const curAssign = {
+                name: assignmentName,
+                dueDate: parsedDate,
+                courLink: assignmentLink,
+                courName: courseName
+            };
+            assignments.push(curAssign);
         })
 
     } catch (error) {
         console.error("Guys we fucked up.", error);
     }
+    console.log(assignments);
     return assignments
 }
 
@@ -78,21 +85,39 @@ function parseDueDate(rawInfo) {
 
 function waitForW2DWidget_homepage() {
     const checkInterval = setInterval(() => {
-        const widget = document.querySelector('d2l-w2d-work-to-do');
-    
-        // does the w2d widget exist yet and is shadow root accessible
-        if (widget && widget.shadowRoot) {
-            clearInterval(checkInterval); // Stop checking once found
-      
-            console.log("D2L Work To Do widget loaded. We on that shit rn");
-            const assignments = scrapeW2D_homepage();
-      
-            // write to local storage
-            chrome.storage.local.set({ cachedAssignments: assignments }, () => {
-            console.log("Assignments saved to storage.");
-            });
+        console.log("Checking for D2L Work To Do widget...");
+
+        try {
+            // Safely traverse shadow DOMs using optional chaining (?.)
+            const widget = document.querySelector('d2l-w2d-work-to-do');
+            const collections = widget?.shadowRoot?.querySelector('d2l-w2d-collections');
+            const listContainer = collections?.shadowRoot?.querySelector('d2l-w2d-list');
+            const list = listContainer?.shadowRoot?.querySelector('d2l-list');
+            
+            const items = list?.querySelectorAll(
+                'd2l-w2d-list-item-quiz, d2l-w2d-list-item-assignment, d2l-w2d-list-item-discussion, d2l-w2d-list-item-content'
+            );
+
+            // Check if items actually exist and have loaded
+            if (items && items.length > 0) {
+                clearInterval(checkInterval); // Stop checking once found
+                console.log("D2L Work To Do widget loaded with " + items.length + " items!");
+                
+                const assignments = scrapeW2D_homepage();
+
+                // Write to local storage
+                chrome.storage.local.set({ cachedAssignments: assignments }, () => {
+                    console.log("Assignments saved to storage.");
+                });
+            } else {
+                console.log("Widget found, but items are still loading...");
+            }
+        } catch (error) {
+            // Catches any temporary null-reference errors while the DOM builds
+            console.log("DOM still loading, retrying...");
         }
-    }, 1000);
+    }, 3000);
 }
 
+console.log ("Script is loaded to scrape.")
 waitForW2DWidget_homepage();

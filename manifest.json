@@ -15,7 +15,8 @@
   ],
   "content_scripts": [
     {
-      "js": ["./gate.js"],
+      "matches": ["https://*/d2l/*"],
+      "js": ["./internalScripts/main.js"],
       "run_at": "document_start"
     }
   ]

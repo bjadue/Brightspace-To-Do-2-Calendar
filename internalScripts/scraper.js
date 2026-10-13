@@ -19,12 +19,14 @@ function scrapeW2D_homepage() {
             if (!item.shadowRoot) throw new Error("it would appear we dont have an assignment after all... exiting");;
 
             const itemGenericLayout = item?.shadowRoot.querySelector('d2l-list-item-generic-layout');
-            if (!itemGenericLayout || !itemGenericLayout.shadowRoot) throw new Error("FUCK YUUUUUUUUUUuu");
+            if (!itemGenericLayout || !itemGenericLayout.shadowRoot) throw new Error("No generic layout why");
 
             const itemContentSlot = itemGenericLayout?.querySelector('div[slot="content"], div[slot="content-action"]');
-            if (!itemContentSlot) throw new Error("fuck the itemContentSlot");
+            if (!itemContentSlot) throw new Error("No content div why");
 
+            let assignmentLink = null;
             const itemHref = itemContentSlot?.querySelector('a');
+            
             if (!itemHref){
                 console.log("Unclickable assignment. Disregard");
             } else {
@@ -36,7 +38,7 @@ function scrapeW2D_homepage() {
             if (itemNameElement && itemNameElement.shadowRoot) {
                 assignmentName = itemNameElement?.getAttribute("_label");
                 if (assignmentName === null) {
-                assignmentName = itemNameElement?.shadowRoot.querySelector(".text")?.textContent?.trim() || "Unknown";
+                assignmentName = itemNameElement?.shadowRoot.textContent?.trim() || "Unknown";
                 }
             } 
             
@@ -123,5 +125,11 @@ function waitForW2DWidget_homepage() {
     }, 2000);
 }
 
-console.log ("Script is loaded to scrape.")
-waitForW2DWidget_homepage();
+export function initializeScraper(method) {
+    console.log("scraper.js was called. Origin passed in " + method);
+    if (method === "home"){
+        waitForW2DWidget_homepage();
+    }
+}
+
+console.log ("Script was loaded automagically. DONT RUN SHIIIIIT")

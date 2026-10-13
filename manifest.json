@@ -1,7 +1,7 @@
 {
   "name": "D2L Brightspace Export To-Do to Calendar",
   "description": "Export Brightspace To-Do assignments to Calendar",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "manifest_version": 3,
   "action": {
     "default_popup": "main.html",
@@ -16,8 +16,14 @@
   "content_scripts": [
     {
       "matches": ["https://*/d2l/*"],
-      "js": ["./internalScripts/scraper.js"],
+      "js": ["/internalScripts/gate.js"],
       "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["/internalScripts/scraper.js"],
+      "matches": ["https://*/*"]
     }
   ]
 }

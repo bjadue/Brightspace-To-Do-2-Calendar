@@ -108,9 +108,11 @@ function scrapeW2D_fullToDo() {
             if (itemNameElement && itemNameElement.shadowRoot) {
                 assignmentName = itemNameElement?.getAttribute("_label");
                 if (assignmentName === null) {
-                assignmentName = itemNameElement?.shadowRoot.textContent?.trim() || "Unknown";
+                assignmentName = itemNameElement?.shadowRoot.textContent?.trim();
                 }
-            } 
+            } else {
+                throw new Error("Item name element not found. What happpuh??")
+            }
             
 
             //we grabbing the due date and course name
@@ -119,10 +121,16 @@ function scrapeW2D_fullToDo() {
             let courseName = "What is life?";
 
             if (attrList) {
-                // must peep the spans
-                const spans = attrList.querySelectorAll('span');
-                if (spans.length > 0) rawDueDate = spans[0].textContent.trim(); // hopefully we get Mth ##
-                if (spans.length > 1) courseName = spans[1].textContent.trim(); // hopefully we get a course name
+                const courseNameSpan = attrList.querySelector('div span');
+                if (courseNameSpan) courseName = courseNameSpan.textContent.trim();
+            }
+
+            const descElement = itemContentSlot?.querySelector('d2l-activity-description-quiz, d2l-activity-description-assignment, d2l-activity-description-discussion, d2l-activity-description-content');
+            let assignmentDesc = null;
+
+            if (descElement) {
+                const curSpan = descElement?.shadowRoot?.querySelector('span');
+                assignmentDesc = curSpan?.textContent?.trim() || null;
             }
 
             //get the right due date
@@ -131,8 +139,9 @@ function scrapeW2D_fullToDo() {
             const curAssign = {
                 name: assignmentName,
                 dueDate: parsedDate,
-                courLink: assignmentLink,
-                courName: courseName
+                assDesc: assignmentDesc,
+                courName: courseName,
+                assLink: assignmentLink
             };
             assignments.push(curAssign);
         })
@@ -141,7 +150,7 @@ function scrapeW2D_fullToDo() {
         console.error("Guys we fucked up.", error);
     }
     console.log(assignments);
-    return assignments
+    return assignments;
 }
 
 function parseDueDate(rawInfo) {

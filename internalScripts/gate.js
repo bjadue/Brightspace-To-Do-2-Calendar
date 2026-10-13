@@ -20,7 +20,7 @@ console.log("Script loaded to check if this is Brightspace");
             scraper.initializeScraper("home");
         } else if (path.startsWith('/d2l/le/worktodo/view')) {
             console.log("Would be calling the full list function");
-            // Call settings functions here
+            scraper.initializeScraper("full");
         }
     }
 

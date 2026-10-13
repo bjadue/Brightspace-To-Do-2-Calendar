@@ -22,7 +22,7 @@ function renderCheckboxList(taskItems) {
             <label>
                 <input type="checkbox" value="${item.assLink || '#'}" />
                 <strong>${item.name || 'Unknown Assignment'}</strong>
-                <span class="meta">${item.courName || ''} \nDue: ${item.dueDate || 'No Date'} \n"${item.assDesc || 'No description'}</span>
+                <span class="meta"> Due: ${item.dueDate || 'No Date'} - ${item.courName || ''} - ${item.assDesc || 'N/A'}</span>
             </label>
             
         `;

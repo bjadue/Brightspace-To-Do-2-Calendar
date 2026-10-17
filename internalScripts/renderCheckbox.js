@@ -26,11 +26,13 @@ function renderCheckboxList(taskItems) {
 
         // Fixed property names to match what you saved: name, courseName, dueDate
         div.innerHTML = `
-            <label>
-                <input type="checkbox" value="${item.assLink || ''}" />
-                <strong>${item.name || 'Unknown Assignment'}</strong><br>
-                <span class="meta"> Due: ${item.dueDate || 'No Date'} - ${item.courName || ''} - ${trunDesc(fullDesc, 200) || item.assDesc} </span>
-            </label>
+            <span>
+                <label>
+                    <input type="checkbox" value="${item.assLink || ''}" />
+                    <strong>${item.name || 'Unknown Assignment'}</strong><br>
+                    <span class="meta"> Due: ${item.dueDate || 'No Date'} - ${item.courName || ''} - ${trunDesc(fullDesc, 200) || item.assDesc} </span>
+                </label>
+            </span>
             
         `;
         container.appendChild(div);

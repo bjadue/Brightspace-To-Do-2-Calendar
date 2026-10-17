@@ -27,7 +27,7 @@ function renderCheckboxList(taskItems) {
         // Fixed property names to match what you saved: name, courseName, dueDate
         div.innerHTML = `
             <label>
-                <input type="checkbox" value="${item.assLink || '#'}" />
+                <input type="checkbox" value="${item.assLink || ''}" />
                 <strong>${item.name || 'Unknown Assignment'}</strong><br>
                 <span class="meta"> Due: ${item.dueDate || 'No Date'} - ${item.courName || ''} - ${trunDesc(fullDesc, 200) || item.assDesc} </span>
             </label>
@@ -40,15 +40,6 @@ function renderCheckboxList(taskItems) {
 document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM Loaded");
     
-
-    const icsButton = document.getElementById('btnExportToICS');
-    if (icsButton) {
-        icsButton.addEventListener('click', async function() {
-            console.log("Export to ICS button clicked");
-            const exporterModule = await exporter;
-            exporterModule.initializeExport("ics", assignments);
-        })
-    }
     chrome.storage.local.get(['cachedAssignments'], (result) => {
         // Safe check for storage results
         assignments = result.cachedAssignments || [];
@@ -56,4 +47,17 @@ document.addEventListener('DOMContentLoaded', () => {
         
         renderCheckboxList(assignments);
     });
+    const icsButton = document.getElementById('btnExportToICS');
+    if (icsButton) {
+        icsButton.addEventListener('click', async function() {
+            console.log("Export to ICS button clicked");
+            const selectedAssignmentElements = document.querySelectorAll("input[type='checkbox']:checked");
+            const selectedAssignments = Array.from(selectedAssignmentElements)
+                .map(element => assignments.find(assignment => assignment.assLink === element.value))
+                .filter(Boolean);
+
+            const exporterModule = await exporter;
+            exporterModule.initializeExport("ics", selectedAssignments);
+        })
+    }
 });

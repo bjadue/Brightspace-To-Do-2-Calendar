@@ -80,71 +80,77 @@ function scrapeW2D_fullToDo() {
     try {
         const w2dWidget = document.querySelector('d2l-w2d-work-to-do');
         const w2dCollections = w2dWidget?.shadowRoot.querySelector('d2l-w2d-collections');
-        const w2dListContainer = w2dCollections?.shadowRoot.querySelector('d2l-w2d-list');
-        const d2lList = w2dListContainer?.shadowRoot.querySelector('d2l-list');
-        if (!d2lList || !d2lList.shadowRoot) throw new Error("List not found. Exiting.");
-        // running through all item types
-        const items = d2lList?.querySelectorAll('d2l-w2d-list-item-quiz, d2l-w2d-list-item-assignment, d2l-w2d-list-item-discussion, d2l-w2d-list-item-content');
-        items.forEach((item, index) => {
-            if (!item.shadowRoot) throw new Error("it would appear we dont have an assignment after all... exiting");;
+        const w2dListContainers = w2dCollections?.shadowRoot.querySelectorAll('d2l-w2d-list');
+        w2dListContainers.forEach((list, index) => {
+            const d2lList = list?.shadowRoot.querySelector('d2l-list');
+            if (!d2lList || !d2lList.shadowRoot) throw new Error("List not found. Exiting.");
+            // running through all item types
+            const items = d2lList?.querySelectorAll('d2l-w2d-list-item-quiz, d2l-w2d-list-item-assignment, d2l-w2d-list-item-discussion, d2l-w2d-list-item-content');
+            items.forEach((item, index) => {
+                if (!item.shadowRoot) throw new Error("it would appear we dont have an assignment after all... exiting");;
 
-            const itemGenericLayout = item?.shadowRoot.querySelector('d2l-list-item-generic-layout');
-            if (!itemGenericLayout || !itemGenericLayout.shadowRoot) throw new Error("No generic layout why");
+                const itemGenericLayout = item?.shadowRoot.querySelector('d2l-list-item-generic-layout');
+                if (!itemGenericLayout || !itemGenericLayout.shadowRoot) throw new Error("No generic layout why");
 
-            const itemContentSlot = itemGenericLayout?.querySelector('div[slot="content"], div[slot="content-action"]');
-            if (!itemContentSlot) throw new Error("No content div why");
+                const itemContentSlot = itemGenericLayout?.querySelector('div[slot="content"], div[slot="content-action"]');
+                if (!itemContentSlot) throw new Error("No content div why");
 
-            let assignmentLink = null;
-            const itemHref = itemContentSlot?.querySelector('a');
-            
-            if (!itemHref){
-                console.log("Unclickable assignment. Disregard");
-            } else {
-                assignmentLink = itemHref?.getAttribute('href');
-            }
-            // we grabbing the name
-            const itemNameElement = itemContentSlot?.querySelector('[class*="d2l-w2d-list-item-name"]');
-            let assignmentName = "Unknown";
-            if (itemNameElement && itemNameElement.shadowRoot) {
-                assignmentName = itemNameElement?.getAttribute("_label");
-                if (assignmentName === null) {
-                assignmentName = itemNameElement?.shadowRoot.textContent?.trim();
+                let assignmentLink = null;
+                const itemHref = itemContentSlot?.querySelector('a');
+                
+                if (!itemHref){
+                    console.log("Unclickable assignment. Disregard");
+                } else {
+                    assignmentLink = itemHref?.getAttribute('href');
                 }
-            } else {
-                throw new Error("Item name element not found. What happpuh??")
-            }
-            
+                // we grabbing the name
+                const itemNameElement = itemContentSlot?.querySelector('[class*="d2l-w2d-list-item-name"]');
+                let assignmentName = "Unknown";
+                if (itemNameElement && itemNameElement.shadowRoot) {
+                    assignmentName = itemNameElement?.getAttribute("_label");
+                    if (assignmentName === null) {
+                    assignmentName = itemNameElement?.shadowRoot.textContent?.trim();
+                    }
+                } else {
+                    throw new Error("Item name element not found. What happpuh??")
+                }
+                
 
-            //we grabbing the due date and course name
-            const attrList = itemContentSlot.querySelector('d2l-w2d-attribute-list');
-            let rawDueDate = "";
-            let courseName = "What is life?";
+                //we grabbing the due date and course name
+                const attrList = itemContentSlot.querySelector('d2l-w2d-attribute-list');
+                let rawDueDate = "";
+                let courseName = "What is life?";
 
-            if (attrList) {
-                const courseNameSpan = attrList.querySelector('div span');
-                if (courseNameSpan) courseName = courseNameSpan.textContent.trim();
-            }
+                if (attrList) {
+                    const spans = attrList.querySelectorAll('span');
+                    if (spans.length > 0) rawDueDate = spans[0].textContent.trim(); // hopefully we get Mth ##
+                    if (spans.length > 1) courseName = spans[1].textContent.trim(); // hopefully we get a course name
+                }
+                
 
-            const descElement = itemContentSlot?.querySelector('d2l-activity-description-quiz, d2l-activity-description-assignment, d2l-activity-description-discussion, d2l-activity-description-content');
-            let assignmentDesc = null;
+                const descElement = itemContentSlot?.querySelector('d2l-activity-description-quiz, d2l-activity-description-assignment, d2l-activity-description-discussion, d2l-activity-description-content');
+                let assignmentDesc = null;
 
-            if (descElement) {
-                const curSpan = descElement?.shadowRoot?.querySelector('span');
-                assignmentDesc = curSpan?.textContent?.trim() || null;
-            }
+                if (descElement) {
+                    const curSpan = descElement?.shadowRoot?.querySelector('span');
+                    assignmentDesc = curSpan?.textContent?.trim() || null;
+                }
 
-            //get the right due date
-            const parsedDate = parseDueDate(rawDueDate)
+                //get the right due date
+                const parsedDate = parseDueDate(rawDueDate)
 
-            const curAssign = {
-                name: assignmentName,
-                dueDate: parsedDate,
-                assDesc: assignmentDesc,
-                courName: courseName,
-                assLink: assignmentLink
-            };
-            assignments.push(curAssign);
+                const curAssign = {
+                    name: assignmentName,
+                    dueDate: parsedDate,
+                    assDesc: assignmentDesc,
+                    courName: courseName,
+                    assLink: assignmentLink
+                };
+                assignments.push(curAssign);
+            })
         })
+        
+        
 
     } catch (error) {
         console.error("Guys we fucked up.", error);

@@ -15,14 +15,20 @@ function renderCheckboxList(taskItems) {
 
     taskItems.forEach(item => {
         const div = document.createElement('div');
+        const fullDesc = item?.assDesc
+        const trunDesc = (str, n) => {
+            if (!str) return "(No Description)";
+            return str.length > n ? str.slice(0, n) + '[...]' : str;
+        }
+            
         div.className = 'task-item';
 
         // Fixed property names to match what you saved: name, courseName, dueDate
         div.innerHTML = `
             <label>
                 <input type="checkbox" value="${item.assLink || '#'}" />
-                <strong>${item.name || 'Unknown Assignment'}</strong>
-                <span class="meta"> Due: ${item.dueDate || 'No Date'} - ${item.courName || ''} - ${item.assDesc || 'N/A'}</span>
+                <strong>${item.name || 'Unknown Assignment'}</strong><br>
+                <span class="meta"> Due: ${item.dueDate || 'No Date'} - ${item.courName || ''} - ${trunDesc(fullDesc, 200) || item.assDesc} </span>
             </label>
             
         `;
@@ -31,7 +37,7 @@ function renderCheckboxList(taskItems) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("can i render it now");
+    console.log("DOM Loaded");
     
     chrome.storage.local.get(['cachedAssignments'], (result) => {
         // Safe check for storage results

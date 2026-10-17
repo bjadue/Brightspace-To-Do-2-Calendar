@@ -1,7 +1,8 @@
 console.log('UI would show up.');
-
 // Use 'let' so the variable can be populated once storage returns data
 let assignments = [];
+const exportURL = chrome.runtime.getURL('/internalScripts/exporting.js');
+const exporter = import(exportURL);
 
 function renderCheckboxList(taskItems) {
     console.log("Rendering checkbox list...");
@@ -39,6 +40,15 @@ function renderCheckboxList(taskItems) {
 document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM Loaded");
     
+
+    const icsButton = document.getElementById('btnExportToICS');
+    if (icsButton) {
+        icsButton.addEventListener('click', async function() {
+            console.log("Export to ICS button clicked");
+            const exporterModule = await exporter;
+            exporterModule.initializeExport("ics", assignments);
+        })
+    }
     chrome.storage.local.get(['cachedAssignments'], (result) => {
         // Safe check for storage results
         assignments = result.cachedAssignments || [];

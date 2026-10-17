@@ -1,7 +1,7 @@
 {
   "name": "D2L To-Do to Calendar",
   "description": "Export Brightspace To-Do assignments to Calendar",
-  "version": "0.0.71-ALPHA",
+  "version": "0.0.71",
   "manifest_version": 3,
   "action": {
     "default_popup": "main.html",

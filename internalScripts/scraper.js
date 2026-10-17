@@ -228,7 +228,7 @@ function waitForW2DWidget_fullToDo() {
             // Check if items actually exist and have loaded
             if (items && items.length > 0) {
                 clearInterval(checkInterval); // Stop checking once found
-                console.log("D2L Work To Do widget loaded with " + items.length + " items!");
+                console.log("D2L Work To Do widget loaded with " + items.length + " dates!");
                 
                 const assignments = scrapeW2D_fullToDo();
 

@@ -44,13 +44,13 @@ function exportToICS(items) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'export.ics';
+    link.download = 'brightspace-assignments.ics';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     setTimeout(() => URL.revokeObjectURL(url), 1000);
 
-    console.log("ICS file generated and downloaded successfully!");
+    console.log("ICS file generated with " + items.length + " items.");
 }
 
 export function initializeExport(method, items){

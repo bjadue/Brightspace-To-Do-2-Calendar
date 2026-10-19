@@ -61,7 +61,7 @@ function scrapeW2D_homepage() {
             const curAssign = {
                 name: assignmentName,
                 dueDate: parsedDate,
-                courLink: assignmentLink,
+                assLink: assignmentLink,
                 courName: courseName
             };
             assignments.push(curAssign);

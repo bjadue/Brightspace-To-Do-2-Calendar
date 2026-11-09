@@ -1,8 +1,9 @@
 {
   "name": "D2L To-Do to Calendar",
   "description": "Export Brightspace To-Do assignments to Calendar",
-  "version": "0.0.71",
+  "version": "0.0.72",
   "manifest_version": 3,
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzQkbFOm7tJkJ5b/QZszyZiBjzSZXrS6X3rUiu/HYS8wgLTRDP8XrbCt210utdZdCSVpoBuvBl9aWPn1vODIC8/aQc+FihxnzJylEBDEmQatOG26LiLQQSq+WnBla6mSFvIMeLxonsBzn7nl8JeCZsjZRe9aGcOaZrx80Z2BlWrPVTCeex6eaVvq6VfejE9HjeWxPTMpcLa3vAQd72e4hK1HCAfusfDUqTeBFFs+wprBM2SnzoAma/HUCU/Tqc1CliEoJ2wKSeo37WOsbCctWHWG5mFPioO7TWOShvTISOpiXJa9EWLcO1EQtX1j1Jzk44IoQHZ718PrYJxRci+HF2QIDAQAB",
   "action": {
     "default_popup": "main.html",
     "default_icon": "hello_extensions.png"
@@ -13,6 +14,10 @@
     "scripting",
     "tabs"
   ],
+  "background": {
+    "service_worker": "/internalScripts/background.js",
+    "type": "module"
+  },
   "content_scripts": [
     {
       "matches": ["https://*/d2l/*"],
@@ -29,5 +34,15 @@
       "resources": ["/internalScripts/exporting.js"],
       "matches": ["https://*/*"]
     }
-  ]
+  ],
+  "oauth2": {
+    "client_id": "349374224255-q63c1apfg5v6lp8sganhubssof18debo.apps.googleusercontent.com",
+    "scopes":[
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/calendar", 
+      "https://www.googleapis.com/auth/calendar.calendarlist",
+      "https://www.googleapis.com/auth/calendar.events.owned",
+      "https://www.googleapis.com/auth/calendar.settings"
+    ]
+  }
 }

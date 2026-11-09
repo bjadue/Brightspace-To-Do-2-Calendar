@@ -1,5 +1,28 @@
 // this should be running from gate.js
 
+function saveAssignments(assignments) {
+    chrome.runtime.sendMessage(
+        { type: "assignments:replace", assignments },
+        (response) => {
+            if (chrome.runtime.lastError) {
+                console.error("Could not send assignments to IndexedDB:", chrome.runtime.lastError.message);
+                return;
+            }
+            if (!response?.ok) {
+                console.error("Could not save assignments:", response?.error || "No response from the extension database.");
+                return;
+            }
+            console.log("Assignments saved to IndexedDB.");
+        }
+    );
+}
+
+function getDueTooltipText(attributeList) {
+    const tooltip = attributeList.querySelector('d2l-tooltip');
+    return tooltip?.shadowRoot?.textContent?.trim()
+        || tooltip?.textContent?.trim()
+        || "";
+}
 
 function scrapeW2D_homepage() {
     const assignments = [];
@@ -47,20 +70,22 @@ function scrapeW2D_homepage() {
             const attrList = itemContentSlot.querySelector('d2l-w2d-attribute-list');
             let rawDueDate = "";
             let courseName = "What is life?";
+            let rawDueTooltip = "";
 
             if (attrList) {
                 // must peep the spans
                 const spans = attrList.querySelectorAll('span');
                 if (spans.length > 0) rawDueDate = spans[0].textContent.trim(); // hopefully we get Mth ##
                 if (spans.length > 1) courseName = spans[1].textContent.trim(); // hopefully we get a course name
+                rawDueTooltip = getDueTooltipText(attrList);
+                console.log(rawDueTooltip);
             }
 
-            //get the right due date
-            const parsedDate = parseDueDate(rawDueDate)
+            const dueDates = parseDueDate(rawDueDate, rawDueTooltip);
 
             const curAssign = {
                 name: assignmentName,
-                dueDate: parsedDate,
+                ...dueDates,
                 assLink: assignmentLink,
                 courName: courseName
             };
@@ -120,11 +145,13 @@ function scrapeW2D_fullToDo() {
                 const attrList = itemContentSlot.querySelector('d2l-w2d-attribute-list');
                 let rawDueDate = "";
                 let courseName = "What is life?";
+                let rawDueTooltip = "";
 
                 if (attrList) {
                     const spans = attrList.querySelectorAll('span');
                     if (spans.length > 0) rawDueDate = spans[0].textContent.trim(); // hopefully we get Mth ##
                     if (spans.length > 1) courseName = spans[1].textContent.trim(); // hopefully we get a course name
+                    rawDueTooltip = getDueTooltipText(attrList);
                 }
                 
 
@@ -136,12 +163,11 @@ function scrapeW2D_fullToDo() {
                     assignmentDesc = curSpan?.textContent?.trim() || null;
                 }
 
-                //get the right due date
-                const parsedDate = parseDueDate(rawDueDate)
+                const dueDates = parseDueDate(rawDueDate, rawDueTooltip);
 
                 const curAssign = {
                     name: assignmentName,
-                    dueDate: parsedDate,
+                    ...dueDates,
                     assDesc: assignmentDesc,
                     courName: courseName,
                     assLink: assignmentLink
@@ -159,8 +185,16 @@ function scrapeW2D_fullToDo() {
     return assignments;
 }
 
-function parseDueDate(rawInfo) {
-    if (!rawInfo) return null;
+function parseDueDate(rawInfo, tooltipText = "") {
+    const tooltipDate = parseTooltipDate(tooltipText);
+    if (tooltipDate) {
+        const hasExplicitTime = hasTooltipTime(tooltipText);
+        return createDueDateTimes(tooltipDate, hasExplicitTime);
+    }
+
+    if (!rawInfo) {
+        return { dueDate: null, startDateTime: null, endDateTime: null };
+    }
 
     const cleanStr = rawInfo.replace(/^Due\s+/i, '').trim(); // screw the due
     const currentYear = new Date().getFullYear();
@@ -171,7 +205,52 @@ function parseDueDate(rawInfo) {
     if (parsedDateObj < today && (today - parsedDateObj) > (100 * 24 * 60 * 60 * 1000)) {
         parsedDateObj.setFullYear(currentYear + 1);
     }
-    return parsedDateObj.toLocaleDateString('en-US');
+    if (Number.isNaN(parsedDateObj.getTime())) {
+        return { dueDate: null, startDateTime: null, endDateTime: null };
+    }
+
+    return createDueDateTimes(parsedDateObj, false);
+}
+
+function createDueDateTimes(dueDate, hasExplicitTime) {
+    const startDate = new Date(
+        dueDate.getFullYear(),
+        dueDate.getMonth(),
+        dueDate.getDate(),
+        8
+    );
+    const endDate = hasExplicitTime
+        ? dueDate
+        : new Date(
+            dueDate.getFullYear(),
+            dueDate.getMonth(),
+            dueDate.getDate(),
+            23,
+            59
+        );
+
+    return {
+        dueDate: dueDate.toLocaleDateString('en-US'),
+        startDateTime: startDate.toISOString(),
+        endDateTime: endDate.toISOString()
+    };
+}
+
+function parseTooltipDate(tooltipText) {
+    if (!tooltipText) return null;
+
+    const normalizedText = tooltipText.replace(/[\u00a0\u202f]/g, ' ').trim();
+    const dueMatch = normalizedText.match(/^Due\s+(.+?)(?=\s*Available\b|$)/i);
+    if (!dueMatch) return null;
+
+    const parsedDate = new Date(dueMatch[1].trim());
+    return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+}
+
+function hasTooltipTime(tooltipText) {
+    const normalizedText = tooltipText.replace(/[\u00a0\u202f]/g, ' ').trim();
+    const dueMatch = normalizedText.match(/^Due\s+(.+?)(?=\s*Available\b|$)/i);
+    return Boolean(dueMatch && /\b\d{1,2}:\d{2}\s*(?:AM|PM)\b/i.test(dueMatch[1]));
 }
 
 function waitForW2DWidget_homepage() {
@@ -196,10 +275,7 @@ function waitForW2DWidget_homepage() {
                 
                 const assignments = scrapeW2D_homepage();
 
-                // Write to local storage
-                chrome.storage.local.set({ cachedAssignments: assignments }, () => {
-                    console.log("Assignments saved to storage.");
-                });
+                saveAssignments(assignments);
             } else {
                 console.log("Widget found, but items are still loading...");
             }
@@ -232,10 +308,7 @@ function waitForW2DWidget_fullToDo() {
                 
                 const assignments = scrapeW2D_fullToDo();
 
-                // Write to local storage
-                chrome.storage.local.set({ cachedAssignments: assignments }, () => {
-                    console.log("Assignments saved to storage.");
-                });
+                saveAssignments(assignments);
             } else {
                 console.log("Widget found, but items are still loading...");
             }

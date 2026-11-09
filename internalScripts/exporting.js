@@ -21,19 +21,19 @@ function exportToICS(items) {
     let icsContent = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Brightspace To-Do Exporter//EN\r\n";
 
     items.forEach(item => {
-        const eventDate = formatDateForICS(item.dueDate);
+        const startDate = formatDateForICS(item.startDateTime || item.dueDate);
+        const endDate = formatDateForICS(item.endDateTime || item.dueDate);
 
         icsContent += "BEGIN:VEVENT\r\n";
         icsContent += `SUMMARY:${escapeICS(item.name || 'Untitled Assignment')}\r\n`;
-        icsContent += `DESCRIPTION:${escapeICS(item.assDesc || 'No description provided')}`;
+        icsContent += `DESCRIPTION:${escapeICS(item.assDesc || 'No description provided')}\r\n`;
         if (item.assLink) {
-            icsContent += `\\nLink: ${escapeICS(item.assLink)}`;
+            icsContent += `URL:${escapeICS(item.assLink)}\r\n`;
         }
-        icsContent += "\r\n";
         icsContent += `LOCATION:${escapeICS(item.courName)}\r\n`;
-        if (eventDate) {
-            icsContent += `DTSTART:${eventDate}\r\n`;
-            icsContent += `DTEND:${eventDate}\r\n`;
+        if (startDate && endDate) {
+            icsContent += `DTSTART:${startDate}\r\n`;
+            icsContent += `DTEND:${endDate}\r\n`;
         }
         icsContent += "END:VEVENT\r\n";
     });

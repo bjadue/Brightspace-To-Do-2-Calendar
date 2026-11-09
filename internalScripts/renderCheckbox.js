@@ -10,7 +10,7 @@ function renderCheckboxList(taskItems) {
     container.innerHTML = '';
 
     if (!taskItems || taskItems.length === 0) {
-        container.innerHTML = '<p>No assignments found.</p>';
+        container.innerHTML = '<p>No assignments found. (Try reloading extension?)</p>';
         return;
     }
 
@@ -24,11 +24,10 @@ function renderCheckboxList(taskItems) {
             
         div.className = 'task-item';
 
-        // Fixed property names to match what you saved: name, courseName, dueDate
         div.innerHTML = `
             <span>
                 <label>
-                    <input type="checkbox" value="${item.assLink || ''}" />
+                    <input type="checkbox" value="${item.id}" />
                     <strong>${item.name || 'Unknown Assignment'}</strong><br>
                     <span class="meta"> Due: ${item.dueDate || 'No Date'} - ${item.courName || ''} - ${trunDesc(fullDesc, 200) || item.assDesc} </span>
                 </label>
@@ -42,11 +41,14 @@ function renderCheckboxList(taskItems) {
 document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM Loaded");
     
-    chrome.storage.local.get(['cachedAssignments'], (result) => {
-        // Safe check for storage results
-        assignments = result.cachedAssignments || [];
-        console.log("printing assignments:", assignments);
-        
+    chrome.runtime.sendMessage({ type: 'assignments:get' }, (response) => {
+        if (chrome.runtime.lastError || !response?.ok) {
+            const error = chrome.runtime.lastError?.message || response?.error || 'No response from the extension database.';
+            document.getElementById('checkboxList').textContent = `Could not load assignments: ${error}`;
+            return;
+        }
+
+        assignments = response.assignments || [];
         renderCheckboxList(assignments);
     });
     const icsButton = document.getElementById('btnExportToICS');
@@ -55,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("Export to ICS button clicked");
             const selectedAssignmentElements = document.querySelectorAll("input[type='checkbox']:checked");
             const selectedAssignments = Array.from(selectedAssignmentElements)
-                .map(element => assignments.find(assignment => assignment.assLink === element.value))
+                .map(element => assignments.find(assignment => assignment.id === element.value))
                 .filter(Boolean);
 
             const exporterModule = await exporter;

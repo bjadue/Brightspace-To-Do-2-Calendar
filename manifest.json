@@ -12,7 +12,8 @@
     "storage",
     "activeTab",
     "scripting",
-    "tabs"
+    "tabs",
+    "identity"
   ],
   "background": {
     "service_worker": "/internalScripts/background.js",
@@ -37,12 +38,11 @@
   ],
   "oauth2": {
     "client_id": "349374224255-q63c1apfg5v6lp8sganhubssof18debo.apps.googleusercontent.com",
-    "scopes":[
-      "https://www.googleapis.com/auth/userinfo.email",
-      "https://www.googleapis.com/auth/calendar", 
-      "https://www.googleapis.com/auth/calendar.calendarlist",
-      "https://www.googleapis.com/auth/calendar.events.owned",
-      "https://www.googleapis.com/auth/calendar.settings"
+    "scopes": [
+      "https://www.googleapis.com/auth/tasks"
     ]
-  }
+  },
+  "host_permissions": [
+    "https://tasks.googleapis.com/*"
+  ]
 }

@@ -120,12 +120,61 @@ function getAllAssignments(db) {
     });
 }
 
+function getAssignmentMatchKey(assignment) {
+    const name = typeof assignment.name === "string" ? assignment.name.trim().toLowerCase() : "";
+    if (!name || name === "unknown") {
+        return null;
+    }
+
+    return JSON.stringify([
+        name,
+        typeof assignment.courName === "string" ? assignment.courName.trim().toLowerCase() : "",
+        typeof assignment.dueDate === "string" ? assignment.dueDate.trim().toLowerCase() : ""
+    ]);
+}
+
+function reconcileAssignments(existingAssignments, assignments) {
+    const existingByIdentity = new Map();
+    existingAssignments.forEach((assignment) => {
+        const key = getAssignmentMatchKey(assignment);
+        if (key && !existingByIdentity.has(key)) {
+            existingByIdentity.set(key, assignment);
+        }
+    });
+
+    return assignments.map((assignment) => {
+        const existingAssignment = existingByIdentity.get(getAssignmentMatchKey(assignment));
+        if (!existingAssignment) {
+            return assignment;
+        }
+
+        if (assignment.assLink) {
+            return assignment;
+        }
+
+        if (existingAssignment.assLink) {
+            return {
+                ...assignment,
+                id: existingAssignment.id,
+                assLink: existingAssignment.assLink
+            };
+        }
+
+        return assignment;
+    });
+}
+
 function replaceAssignments(db, assignments) {
     return new Promise((resolve, reject) => {
         const transaction = db.transaction(ASSIGNMENTS_STORE, "readwrite");
         const store = transaction.objectStore(ASSIGNMENTS_STORE);
-        store.clear();
-        assignments.forEach((assignment) => store.put(assignment));
+        const request = store.getAll();
+
+        request.onsuccess = () => {
+            const reconciledAssignments = reconcileAssignments(request.result, assignments);
+            store.clear();
+            reconciledAssignments.forEach((assignment) => store.put(assignment));
+        };
 
         transaction.oncomplete = resolve;
         transaction.onerror = () => {

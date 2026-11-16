@@ -1,7 +1,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8">
-    
+
     <title>D2L Brightspace To-Do to Calendar - UI</title>
     <meta name="description" content="Export your To-Do list to Google Calendar or MS To-DO.">
   </head>
@@ -58,14 +58,48 @@
     .btn:active{
       transform: scale(0.99);
     }
+    .google-task-list-picker{
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .google-task-list-picker input{
+      flex: 1;
+      min-width: 0;
+    }
+    .google-task-list-picker .btn[hidden]{
+      display: none;
+    }
   </style>
   <body>
     <h3>D2L To-Do to Calendar</h3>
+    <span id="loginRegion">
+      <button id="btnConnectGoogle" class="btn" type="button">
+        Connect Google Tasks
+      </button>
+      <button id="btnConnectMS" class="btn" type="button">
+        Connect Microsoft To-Do
+      </button>
+    </span>
+
     <div class="container">
       <ul id="checkboxList"></ul>
     </div>
+    
+
     <button id="btnExportToICS" class="btn">
-      <label>Export to .ics file.</label>
+      <label>Export to .ics file</label>
     </button>
+    <div id="googleExportRegion" hidden>
+      <label for="googleTaskListInput">Google Task List</label>
+      <div class="google-task-list-picker">
+        <input id="googleTaskListInput" type="text" list="googleTaskLists"
+          placeholder="Choose or type a list name" disabled>
+        <datalist id="googleTaskLists"></datalist>
+        <button id="btnExportToGoogle" class="btn" type="button" hidden>Export</button>
+      </div>
+      <p id="googleTaskListStatus" role="status" aria-live="polite"></p>
+    </div>
+
   </body>
 </html>

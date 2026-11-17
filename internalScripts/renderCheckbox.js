@@ -70,12 +70,43 @@ document.addEventListener('DOMContentLoaded', () => {
         renderCheckboxList(assignments);
     });
 
+    let areWeSignedIn = false;
     const googleButton = document.getElementById('btnConnectGoogle');
     const googleTaskListInput = document.getElementById('googleTaskListInput');
     const googleTaskLists = document.getElementById('googleTaskLists');
     const googleTaskListStatus = document.getElementById('googleTaskListStatus');
     const exportGoogleButton = document.getElementById('btnExportToGoogle');
     const googleExportingRegion = document.getElementById('googleExportRegion');
+
+    const setGoogleConnectionState = (connected) => {
+        areWeSignedIn = connected;
+        googleButton.textContent = connected ? 'Disconnect Google' : 'Connect Google Tasks';
+        googleExportingRegion.hidden = !connected;
+        googleTaskListInput.disabled = !connected;
+        if (!connected) {
+            googleTaskListInput.value = '';
+            googleTaskLists.replaceChildren();
+            exportGoogleButton.hidden = true;
+        }
+    };
+
+    const loadGoogleTaskLists = async () => {
+        googleTaskListStatus.hidden = false;
+        googleTaskListStatus.textContent = 'Loading your Google Task Lists...';
+        try {
+            const exporterModule = await exporter;
+            const taskLists = await exporterModule.getGoogleTaskLists();
+            googleTaskLists.replaceChildren();
+            taskLists.forEach((taskList) => {
+                const option = document.createElement('option');
+                option.value = taskList.title;
+                googleTaskLists.appendChild(option);
+            });
+            googleTaskListStatus.hidden = true;
+        } catch (error) {
+            googleTaskListStatus.textContent = `Could not load Task Lists: ${error.message}`;
+        }
+    };
 
     googleTaskListInput?.addEventListener('input', () => {
         exportGoogleButton.hidden = !googleTaskListInput.value.trim();
@@ -84,38 +115,52 @@ document.addEventListener('DOMContentLoaded', () => {
     googleButton?.addEventListener('click', () => {
         googleButton.disabled = true;
 
-        chrome.identity.getAuthToken({ interactive: true }, async (result) => {
-            googleButton.disabled = false;
+        if (areWeSignedIn) {
+            chrome.identity.clearAllCachedAuthTokens(() => {
+                googleButton.disabled = false;
+                if (chrome.runtime.lastError) {
+                    googleTaskListStatus.hidden = false;
+                    googleTaskListStatus.textContent = `Could not disconnect Google: ${chrome.runtime.lastError.message}`;
+                    return;
+                }
+                setGoogleConnectionState(false);
+                googleTaskListStatus.textContent = '';
+            });
+            return;
+        }
 
+        chrome.identity.getAuthToken({ interactive: true }, async (result) => {
             if (chrome.runtime.lastError) {
+                googleButton.disabled = false;
                 alert(`Google sign-in failed: ${chrome.runtime.lastError.message}`);
                 return;
             }
             const token = typeof result === 'string' ? result : result?.token;
             if (!token) {
+                googleButton.disabled = false;
                 alert('Google sign-in did not return an access token.');
                 return;
             }
 
-            googleButton.textContent = 'Connected to Google';
-            googleExportingRegion.hidden = false;
-            googleTaskListInput.disabled = false;
-            googleTaskListStatus.textContent = 'Loading your Google Task Lists...';
-
             try {
-                const exporterModule = await exporter;
-                const taskLists = await exporterModule.getGoogleTaskLists();
-                googleTaskLists.replaceChildren();
-                taskLists.forEach((taskList) => {
-                    const option = document.createElement('option');
-                    option.value = taskList.title;
-                    googleTaskLists.appendChild(option);
-                });
-                googleTaskListStatus.hidden = true;
+                setGoogleConnectionState(true);
+                await loadGoogleTaskLists();
             } catch (error) {
+                setGoogleConnectionState(false);
+                googleTaskListStatus.hidden = false;
                 googleTaskListStatus.textContent = `Could not load Task Lists: ${error.message}`;
+            } finally {
+                googleButton.disabled = false;
             }
         });
+    });
+
+    chrome.identity.getAuthToken({ interactive: false }, (result) => {
+        if (chrome.runtime.lastError) return;
+        const token = typeof result === 'string' ? result : result?.token;
+        if (!token) return;
+        setGoogleConnectionState(true);
+        loadGoogleTaskLists();
     });
 
     const icsButton = document.getElementById('btnExportToICS');

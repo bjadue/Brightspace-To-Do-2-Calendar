@@ -70,7 +70,19 @@ function getGoogleAccessToken() {
     });
 }
 
-async function requestGoogleTasks(path, token, options = {}) {
+function removeCachedGoogleToken(token) {
+    return new Promise((resolve, reject) => {
+        chrome.identity.removeCachedAuthToken({ token }, () => {
+            if (chrome.runtime.lastError) {
+                reject(new Error(chrome.runtime.lastError.message));
+                return;
+            }
+            resolve();
+        });
+    });
+}
+
+async function requestGoogleTasks(path, token, options = {}, retry = true) {
     const response = await fetch(`https://tasks.googleapis.com/tasks/v1/${path}`, {
         ...options,
         headers: {
@@ -78,6 +90,12 @@ async function requestGoogleTasks(path, token, options = {}) {
             ...(options.headers || {})
         }
     });
+
+    if (response.status === 401 && retry) {
+        await removeCachedGoogleToken(token);
+        const freshToken = await getGoogleAccessToken();
+        return requestGoogleTasks(path, freshToken, options, false);
+    }
 
     if (!response.ok) {
         throw new Error(`Google Tasks returned ${response.status}: ${await response.text()}`);
